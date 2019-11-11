@@ -38,15 +38,16 @@
         $featuringContainer.append($loader);
         const data = new FormData($form);
 
-        getData(`${BASE_API_YST}/list_movies.json?limit=1&query_term=${data.get('name')}`).then((response) => {
-            if (response.data.movies) {
-                const $movieRender = renderMovieFeaturing(response.data.movies[0]);
-                $featuringContainer.innerHTML = $movieRender;
-            } else {
-                renderNotFoundMovie();
-            }
+        getData(`${BASE_API_YST}/list_movies.json?limit=1&query_term=${data.get('name')}`)
+            .then(({data: {movies: pelicula}}) => {
+                if (pelicula) {
+                    const $movieRender = renderMovieFeaturing(pelicula[0]);
+                    $featuringContainer.innerHTML = $movieRender;
+                } else {
+                    renderNotFoundMovie();
+                }
 
-        }).catch((error) => {
+            }).catch((error) => {
             console.log(error);
         });
 
