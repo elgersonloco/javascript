@@ -4,7 +4,11 @@
 
     async function getData(url) {
         const response = await fetch(url);
-        return await response.json();
+        const data = await response.json();
+        if (data.data.movie_count > 0) {
+            return data;
+        }
+
     }
 
     const $form = document.getElementById('form');
@@ -32,6 +36,7 @@
 
     $form.addEventListener('submit', async (event) => {
         event.preventDefault();
+        $featuringContainer.innerHTML = '';
         $home.classList.add('search-active');
         $featuringContainer.style.display = 'grid';
         const $loader = document.createElement('img');
@@ -39,23 +44,23 @@
         $featuringContainer.append($loader);
         const data = new FormData($form);
 
-        getData(`${BASE_API_YST}/list_movies.json?limit=1&query_term=${data.get('name')}`)
-            .then(({data: {movies: pelicula}}) => {
-                if (pelicula) {
-                    $featuringContainer.innerHTML = renderMovieFeaturing(pelicula[0]);
-                } else {
-                    renderNotFoundMovie();
-                }
 
-            }).catch((error) => {
-            console.log(error);
-        });
+        try {
+            const {
+                data: {
+                    movies: pelis
+                }
+            } = await getData(`${BASE_API_YST}/list_movies.json?limit=1&query_term=${data.get('name')}`);
+            $featuringContainer.innerHTML = renderMovieFeaturing(pelis[0]);
+
+        } catch (e) {
+            alert(e);
+            $loader.remove();
+            $home.classList.remove('search-active');
+        }
 
     });
 
-    const {data: {movies: actionList}} = await getData(`${BASE_API_YST}/list_movies.json?genre=action`);
-    const {data: {movies: dramaList}} = await getData(`${BASE_API_YST}/list_movies.json?genre=drama`);
-    const {data: {movies: animationList}} = await getData(`${BASE_API_YST}/list_movies.json?genre=animation`);
 
     function videoItemTemplate(movie, category) {
         return (
@@ -92,18 +97,25 @@
             const HTMLString = videoItemTemplate(movie, category);
             const movieElement = createTemplate(HTMLString);
             $container.append(movieElement);
+            const image = movieElement.querySelector('img');
+            image.addEventListener('load', (event) => {
+                event.target.classList.add('fadeIn');
+            });
             addEventClick(movieElement);
         })
 
 
     }
 
+    const {data: {movies: actionList}} = await getData(`${BASE_API_YST}/list_movies.json?genre=action`);
     const $actionContainer = document.getElementById('action');
     renderMovieList(actionList, $actionContainer, 'action');
 
+    const {data: {movies: dramaList}} = await getData(`${BASE_API_YST}/list_movies.json?genre=drama`);
     const $dramaContainer = document.getElementById('drama');
     renderMovieList(dramaList, $dramaContainer, 'drama');
 
+    const {data: {movies: animationList}} = await getData(`${BASE_API_YST}/list_movies.json?genre=animation`);
     const $animationContainer = document.getElementById('animation');
     renderMovieList(animationList, $animationContainer, 'animation');
 
